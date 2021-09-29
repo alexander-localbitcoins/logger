@@ -1,2 +1,2 @@
 # logger
-Super simply golang logger
+Super simply golang logger. It lacks all features and it worse than the standard logger, such as ability to process any object. Instead we limit all messages to either error or string, which makes more sense with info/warning messages. The main advantages are that we add a header to logs style "INFO: ", output more information on debug logs, and the mock logger allows checking that certain errors or messages were logged (useful in testing).
