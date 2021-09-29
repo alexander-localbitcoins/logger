@@ -30,20 +30,20 @@ func NewLogger(options LoggerOptions) *logger {
 	if options.Contains(Debug) {
 		l.doDebug = true
 	}
-	l.infoFunc = l.doNothing
-	l.errFunc = l.doNothingErr
-	l.warFunc = l.doNothing
-	l.debFunc = l.doNothingErr
+	l.infoFunc = doNothing
+	l.errFunc = doNothingErr
+	l.warFunc = doNothing
+	l.debFunc = doNothingErr
 	if options.Contains(Empty) {
 		// default is to do nothing
 	} else if options.Contains(Quiet) {
 		l.errLogger = log.New(os.Stderr, "ERROR: ", log.LstdFlags) // For fatal or big errors
-		l.errFunc = l.error
+		l.errFunc = logErr
 	} else {
-		l.infoFunc = l.info
-		l.errFunc = l.error
-		l.warFunc = l.warning
-		l.debFunc = l.debug
+		l.infoFunc = logStr
+		l.errFunc = logErr
+		l.warFunc = logStr
+		l.debFunc = logErr
 		l.infoLogger = log.New(os.Stderr, "INFO: ", log.LstdFlags)                      // inform the developer
 		l.errLogger = log.New(os.Stderr, "ERROR: ", log.LstdFlags)                      // For fatal or big errors
 		l.warLogger = log.New(os.Stderr, "WARNING: ", log.LstdFlags)                    //non-fatal errors
@@ -57,49 +57,39 @@ type logger struct {
 	infoLogger *log.Logger
 	warLogger  *log.Logger
 	debLogger  *log.Logger
-	infoFunc   func(string)
-	warFunc    func(string)
-	errFunc    func(error)
-	debFunc    func(error)
+	infoFunc   func(*log.Logger, string)
+	warFunc    func(*log.Logger, string)
+	errFunc    func(*log.Logger, error)
+	debFunc    func(*log.Logger, error)
 	doDebug    bool
 	mut        sync.Mutex
 }
 
 func (l *logger) Info(msg string) {
-	l.infoFunc(msg)
+	l.infoFunc(l.infoLogger, msg)
 }
 
 func (l *logger) Warning(msg string) {
-	l.warFunc(msg)
+	l.warFunc(l.warLogger, msg)
 }
 
 func (l *logger) Error(err error) {
-	l.errFunc(err)
+	l.errFunc(l.errLogger, err)
 }
 
 func (l *logger) Debug(err error) {
 	if l.doDebug {
-		l.debFunc(err)
+		l.debFunc(l.debLogger, err)
 	}
 }
 
-func (l *logger) info(msg string) {
-	l.infoLogger.Println(msg)
+func logStr(l *log.Logger, msg string) {
+	l.Println(msg)
 }
 
-func (l *logger) error(err error) {
-	l.errLogger.Println(err)
+func logErr(l *log.Logger, err error) {
+	l.Println(err)
 }
 
-func (l *logger) warning(msg string) {
-	l.warLogger.Println(msg)
-}
-
-func (l *logger) debug(err error) {
-	if l.doDebug {
-		l.debLogger.Println(err)
-	}
-}
-
-func (l *logger) doNothing(string)   {}
-func (l *logger) doNothingErr(error) {}
+func doNothing(*log.Logger, string)   {}
+func doNothingErr(*log.Logger, error) {}
